@@ -1,33 +1,6 @@
-import type { LearningData, ParsedSubject, Subject } from "../types";
+import type { LearningData, ParsedSubject } from "../types";
 import { CURRENT_SCHEMA_VERSION } from "../types";
-import { newId } from "./id";
-
-/**
- * Turns a parsed tree into a stored Subject, assigning fresh IDs. Used by the
- * sample data below and, from the import flow on, by every fresh import.
- */
-export function subjectFromParsed(
-  parsed: ParsedSubject,
-  sourceRoadmap: string,
-): Subject {
-  const now = new Date().toISOString();
-  return {
-    id: newId("subj"),
-    name: parsed.name,
-    sourceRoadmap,
-    topics: parsed.topics.map((topic) => ({
-      id: newId("top"),
-      name: topic.name,
-      subtopics: topic.subtopics.map((subtopic) => ({
-        id: newId("sub"),
-        name: subtopic.name,
-        status: "not-started" as const,
-      })),
-    })),
-    createdAt: now,
-    updatedAt: now,
-  };
-}
+import { subjectFromParsed } from "./subject";
 
 const SAMPLE_ROADMAP = `# TypeScript
 
@@ -72,10 +45,7 @@ const SAMPLE_PARSED: ParsedSubject = {
   ],
 };
 
-/**
- * Hardcoded data used to exercise the storage layer before the importer
- * exists. Loaded on demand from the UI, never automatically.
- */
+/** A ready-made subject, for trying the tracker without pasting a roadmap. */
 export function sampleData(): LearningData {
   const subject = subjectFromParsed(SAMPLE_PARSED, SAMPLE_ROADMAP);
   subject.topics[0].subtopics[0].status = "done";

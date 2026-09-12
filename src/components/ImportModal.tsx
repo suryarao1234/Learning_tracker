@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { fromDraft, toDraft, validateDraft, type DraftSubject } from "../lib/draft";
 import { parseRoadmap, type ParseResult } from "../lib/parseRoadmap";
-import { subjectFromParsed } from "../lib/sampleData";
+import { subjectFromParsed } from "../lib/subject";
 import { useLearningData } from "../state/useLearningData";
 import { DraftTreeEditor } from "./DraftTreeEditor";
 

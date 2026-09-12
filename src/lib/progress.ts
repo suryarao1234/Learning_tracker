@@ -6,6 +6,8 @@ export type Progress = {
   total: number;
   /** 0–100, rounded. 0 when there is nothing to complete. */
   percent: number;
+  /** The in-progress share, on the same scale. */
+  inProgressPercent: number;
 };
 
 function toProgress(done: number, inProgress: number, total: number): Progress {
@@ -14,6 +16,7 @@ function toProgress(done: number, inProgress: number, total: number): Progress {
     inProgress,
     total,
     percent: total === 0 ? 0 : Math.round((done / total) * 100),
+    inProgressPercent: total === 0 ? 0 : Math.round((inProgress / total) * 100),
   };
 }
 

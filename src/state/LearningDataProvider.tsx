@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { loadData, onStorageError, resetData, saveData } from "../lib/storage";
 import { sampleData } from "../lib/sampleData";
-import type { LearningData, Subject } from "../types";
+import { setSubtopicStatus as applySubtopicStatus } from "../lib/subject";
+import type { LearningData, Subject, SubtopicStatus } from "../types";
 import { LearningDataContext, type LearningDataContextValue } from "./learningDataContext";
 
 export function LearningDataProvider({ children }: { children: ReactNode }) {
@@ -31,6 +32,15 @@ export function LearningDataProvider({ children }: { children: ReactNode }) {
     setDataState((prev) => ({ ...prev, subjects: [...prev.subjects, subject] }));
   }, []);
 
+  const setSubtopicStatus = useCallback(
+    (subjectId: string, topicId: string, subtopicId: string, status: SubtopicStatus) => {
+      setDataState((prev) =>
+        applySubtopicStatus(prev, subjectId, topicId, subtopicId, status),
+      );
+    },
+    [],
+  );
+
   const resetAll = useCallback(() => {
     setDataState(resetData());
   }, []);
@@ -42,8 +52,26 @@ export function LearningDataProvider({ children }: { children: ReactNode }) {
   const dismissError = useCallback(() => setStorageError(null), []);
 
   const value = useMemo<LearningDataContextValue>(
-    () => ({ data, setData, addSubject, resetAll, loadSample, storageError, dismissError }),
-    [data, setData, addSubject, resetAll, loadSample, storageError, dismissError],
+    () => ({
+      data,
+      setData,
+      addSubject,
+      setSubtopicStatus,
+      resetAll,
+      loadSample,
+      storageError,
+      dismissError,
+    }),
+    [
+      data,
+      setData,
+      addSubject,
+      setSubtopicStatus,
+      resetAll,
+      loadSample,
+      storageError,
+      dismissError,
+    ],
   );
 
   return (

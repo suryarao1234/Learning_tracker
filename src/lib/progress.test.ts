@@ -25,7 +25,17 @@ describe("progress", () => {
       inProgress: 1,
       total: 4,
       percent: 50,
+      inProgressPercent: 25,
     });
+  });
+
+  it("reports the in-progress share alongside the done share", () => {
+    const s = subject("A", [["done", "in-progress", "in-progress", "not-started"]]);
+    const p = subjectProgress(s);
+    expect(p.percent).toBe(25);
+    expect(p.inProgressPercent).toBe(50);
+    // The two shares can't overlap, so a bar drawing both never overflows.
+    expect(p.percent + p.inProgressPercent).toBeLessThanOrEqual(100);
   });
 
   it("aggregates across topics in a subject", () => {
@@ -39,6 +49,7 @@ describe("progress", () => {
       inProgress: 0,
       total: 0,
       percent: 0,
+      inProgressPercent: 0,
     });
     expect(overallProgress([])).toMatchObject({ percent: 0, total: 0 });
   });
