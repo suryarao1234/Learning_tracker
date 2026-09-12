@@ -31,6 +31,7 @@ small enough (dozens to low hundreds of topics) that a single JSON blob in
 | `src/lib/storage.ts` | `loadData` / `saveData` / `resetData`, validation, and the schema-migration hook |
 | `src/lib/parseRoadmap.ts` | The local Markdown / plain-text parser and its ambiguity check |
 | `src/lib/normalize.ts` | Name cleanup and the normalized key used for matching and merging |
+| `src/lib/draft.ts` | The editable form of a parsed subject, its edit operations and validation |
 | `src/lib/progress.ts` | Completion counts for a topic, a subject, and everything |
 | `src/lib/sampleData.ts` | `subjectFromParsed`, plus the built-in sample subject |
 | `src/state/` | The Context that holds `LearningData` and persists it on change |
@@ -52,7 +53,7 @@ progress.
 
 - [x] 1. Scaffold, data types, storage layer, reset action
 - [x] 2. Local Markdown/list parser
-- [ ] 3. Import flow UI (paste → parse → editable preview → save)
+- [x] 3. Import flow UI (paste → parse → editable preview → save)
 - [ ] 4. Tracker UI (sidebar, status toggles, completion %)
 - [ ] 5. Re-import / merge logic
 - [ ] 6. Gemini API fallback + settings screen

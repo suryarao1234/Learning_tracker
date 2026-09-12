@@ -1,10 +1,12 @@
 import { createContext } from "react";
-import type { LearningData } from "../types";
+import type { LearningData, Subject } from "../types";
 
 export type LearningDataContextValue = {
   data: LearningData;
   /** Replaces the whole store. Every mutation helper funnels through this. */
   setData: (updater: LearningData | ((prev: LearningData) => LearningData)) => void;
+  /** Appends a fully-formed subject, IDs already assigned. */
+  addSubject: (subject: Subject) => void;
   /** Wipes stored data after the caller has confirmed with the user. */
   resetAll: () => void;
   /** Replaces current data with the built-in sample subject. */

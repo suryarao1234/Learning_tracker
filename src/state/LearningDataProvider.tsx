@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { loadData, onStorageError, resetData, saveData } from "../lib/storage";
 import { sampleData } from "../lib/sampleData";
-import type { LearningData } from "../types";
+import type { LearningData, Subject } from "../types";
 import { LearningDataContext, type LearningDataContextValue } from "./learningDataContext";
 
 export function LearningDataProvider({ children }: { children: ReactNode }) {
@@ -27,6 +27,10 @@ export function LearningDataProvider({ children }: { children: ReactNode }) {
     setDataState((prev) => (typeof updater === "function" ? updater(prev) : updater));
   }, []);
 
+  const addSubject = useCallback((subject: Subject) => {
+    setDataState((prev) => ({ ...prev, subjects: [...prev.subjects, subject] }));
+  }, []);
+
   const resetAll = useCallback(() => {
     setDataState(resetData());
   }, []);
@@ -38,8 +42,8 @@ export function LearningDataProvider({ children }: { children: ReactNode }) {
   const dismissError = useCallback(() => setStorageError(null), []);
 
   const value = useMemo<LearningDataContextValue>(
-    () => ({ data, setData, resetAll, loadSample, storageError, dismissError }),
-    [data, setData, resetAll, loadSample, storageError, dismissError],
+    () => ({ data, setData, addSubject, resetAll, loadSample, storageError, dismissError }),
+    [data, setData, addSubject, resetAll, loadSample, storageError, dismissError],
   );
 
   return (

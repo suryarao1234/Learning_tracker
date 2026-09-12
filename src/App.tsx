@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { ConfirmDialog } from "./components/ConfirmDialog";
+import { ImportModal } from "./components/ImportModal";
 import { ProgressBar } from "./components/ProgressBar";
 import { overallProgress, subjectProgress, topicProgress } from "./lib/progress";
 import { LearningDataProvider } from "./state/LearningDataProvider";
@@ -57,9 +58,11 @@ function TopBar() {
 function Sidebar({
   selectedId,
   onSelect,
+  onImport,
 }: {
   selectedId: string | null;
   onSelect: (id: string) => void;
+  onImport: () => void;
 }) {
   const { data, loadSample, resetAll } = useLearningData();
   const [confirmReset, setConfirmReset] = useState(false);
@@ -69,9 +72,8 @@ function Sidebar({
       <div className="border-b border-slate-200 p-3">
         <button
           type="button"
-          disabled
-          title="Coming in the import milestone"
-          className="w-full rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:bg-slate-300"
+          onClick={onImport}
+          className="w-full rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white hover:bg-slate-800"
         >
           + Import roadmap
         </button>
@@ -80,7 +82,7 @@ function Sidebar({
       <nav className="flex-1 overflow-y-auto p-2">
         {data.subjects.length === 0 ? (
           <p className="px-2 py-4 text-sm text-slate-500">
-            No subjects yet. Load the sample data to check that persistence works.
+            No subjects yet. Import a roadmap to get started.
           </p>
         ) : (
           <ul className="space-y-1">
@@ -146,11 +148,26 @@ function Sidebar({
   );
 }
 
-function SubjectPanel({ subject }: { subject: Subject | null }) {
+function SubjectPanel({
+  subject,
+  onImport,
+}: {
+  subject: Subject | null;
+  onImport: () => void;
+}) {
   if (!subject) {
     return (
-      <main className="flex flex-1 items-center justify-center p-8">
-        <p className="text-sm text-slate-500">Select a subject to see its topics.</p>
+      <main className="flex flex-1 flex-col items-center justify-center gap-3 p-8">
+        <p className="text-sm text-slate-500">
+          Paste an AI-generated learning roadmap and track your way through it.
+        </p>
+        <button
+          type="button"
+          onClick={onImport}
+          className="rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-800"
+        >
+          Import a roadmap
+        </button>
       </main>
     );
   }
@@ -203,6 +220,7 @@ function SubjectPanel({ subject }: { subject: Subject | null }) {
 function Workspace() {
   const { data } = useLearningData();
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [importOpen, setImportOpen] = useState(false);
 
   // Derived rather than stored, so a selection that no longer exists (after a
   // reset, or after loading the sample data) falls back to the first subject
@@ -215,9 +233,16 @@ function Workspace() {
       <StorageErrorBanner />
       <TopBar />
       <div className="flex min-h-0 flex-1">
-        <Sidebar selectedId={selected?.id ?? null} onSelect={setSelectedId} />
-        <SubjectPanel subject={selected} />
+        <Sidebar
+          selectedId={selected?.id ?? null}
+          onSelect={setSelectedId}
+          onImport={() => setImportOpen(true)}
+        />
+        <SubjectPanel subject={selected} onImport={() => setImportOpen(true)} />
       </div>
+      {importOpen && (
+        <ImportModal onClose={() => setImportOpen(false)} onSaved={setSelectedId} />
+      )}
     </div>
   );
 }
