@@ -29,6 +29,8 @@ small enough (dozens to low hundreds of topics) that a single JSON blob in
 | --- | --- |
 | `src/types.ts` | The data model, plus the pre-ID `Parsed*` shapes the importers produce |
 | `src/lib/storage.ts` | `loadData` / `saveData` / `resetData`, validation, and the schema-migration hook |
+| `src/lib/parseRoadmap.ts` | The local Markdown / plain-text parser and its ambiguity check |
+| `src/lib/normalize.ts` | Name cleanup and the normalized key used for matching and merging |
 | `src/lib/progress.ts` | Completion counts for a topic, a subject, and everything |
 | `src/lib/sampleData.ts` | `subjectFromParsed`, plus the built-in sample subject |
 | `src/state/` | The Context that holds `LearningData` and persists it on change |
@@ -49,7 +51,7 @@ progress.
 ## Build status
 
 - [x] 1. Scaffold, data types, storage layer, reset action
-- [ ] 2. Local Markdown/list parser
+- [x] 2. Local Markdown/list parser
 - [ ] 3. Import flow UI (paste → parse → editable preview → save)
 - [ ] 4. Tracker UI (sidebar, status toggles, completion %)
 - [ ] 5. Re-import / merge logic
