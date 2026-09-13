@@ -45,10 +45,12 @@ function reportError(message: string, cause?: unknown): void {
 }
 
 /* ------------------------------------------------------------------ *
- * Raw localStorage access (never throws)
+ * Raw localStorage access (never throws). Exported so other settings can
+ * reuse the same failure handling rather than reaching for localStorage
+ * directly and reintroducing the crash paths.
  * ------------------------------------------------------------------ */
 
-function safeGetItem(key: string): string | null {
+export function safeGetItem(key: string): string | null {
   try {
     return localStorage.getItem(key);
   } catch (err) {
@@ -60,7 +62,7 @@ function safeGetItem(key: string): string | null {
   }
 }
 
-function safeSetItem(key: string, value: string): boolean {
+export function safeSetItem(key: string, value: string): boolean {
   try {
     localStorage.setItem(key, value);
     return true;
@@ -79,7 +81,7 @@ function safeSetItem(key: string, value: string): boolean {
   }
 }
 
-function safeRemoveItem(key: string): void {
+export function safeRemoveItem(key: string): void {
   try {
     localStorage.removeItem(key);
   } catch (err) {

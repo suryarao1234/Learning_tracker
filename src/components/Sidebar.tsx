@@ -1,21 +1,26 @@
-import { useState } from "react";
 import { subjectProgress } from "../lib/progress";
 import { useLearningData } from "../state/useLearningData";
-import { ConfirmDialog } from "./ConfirmDialog";
 import { ProgressBar } from "./ProgressBar";
 
 type SidebarProps = {
   selectedId: string | null;
   onSelect: (id: string) => void;
   onImport: () => void;
+  onOpenSettings: () => void;
   /** Whether the narrow-screen drawer is showing. Ignored from `sm` up. */
   open: boolean;
   onClose: () => void;
 };
 
-export function Sidebar({ selectedId, onSelect, onImport, open, onClose }: SidebarProps) {
-  const { data, loadSample, resetAll } = useLearningData();
-  const [confirm, setConfirm] = useState<"reset" | "sample" | null>(null);
+export function Sidebar({
+  selectedId,
+  onSelect,
+  onImport,
+  onOpenSettings,
+  open,
+  onClose,
+}: SidebarProps) {
+  const { data } = useLearningData();
   const hasData = data.subjects.length > 0;
 
   // Below `sm` there isn't room for a permanent sidebar beside the tracker, so
@@ -93,49 +98,19 @@ export function Sidebar({ selectedId, onSelect, onImport, open, onClose }: Sideb
         )}
       </nav>
 
-      <div className="space-y-2 border-t border-slate-200 p-3">
+      <div className="border-t border-slate-200 p-3">
         <button
           type="button"
-          onClick={() => (hasData ? setConfirm("sample") : loadSample())}
+          onClick={() => {
+            onClose();
+            onOpenSettings();
+          }}
           className="w-full rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50"
         >
-          Load sample data
-        </button>
-        <button
-          type="button"
-          disabled={!hasData}
-          onClick={() => setConfirm("reset")}
-          className="w-full rounded-md border border-red-200 bg-white px-3 py-1.5 text-sm text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:border-slate-200 disabled:text-slate-400 disabled:hover:bg-white"
-        >
-          Reset all data
+          Settings
         </button>
       </div>
 
-      <ConfirmDialog
-        open={confirm === "reset"}
-        title="Reset all data?"
-        message="Every subject, topic and status you've tracked will be permanently deleted from this browser. This can't be undone."
-        confirmLabel="Delete everything"
-        destructive
-        onCancel={() => setConfirm(null)}
-        onConfirm={() => {
-          resetAll();
-          setConfirm(null);
-        }}
-      />
-
-      <ConfirmDialog
-        open={confirm === "sample"}
-        title="Replace everything with the sample?"
-        message="Loading the sample subject discards the subjects you already have, along with their progress."
-        confirmLabel="Load the sample"
-        destructive
-        onCancel={() => setConfirm(null)}
-        onConfirm={() => {
-          loadSample();
-          setConfirm(null);
-        }}
-      />
       </aside>
     </>
   );

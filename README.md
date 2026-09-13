@@ -33,6 +33,8 @@ small enough (dozens to low hundreds of topics) that a single JSON blob in
 | `src/lib/normalize.ts` | Name cleanup and the normalized key used for matching and merging |
 | `src/lib/draft.ts` | The editable form of a parsed subject, its edit operations and validation |
 | `src/lib/merge.ts` | Diffing a new roadmap against a stored subject, and applying the result |
+| `src/lib/gemini.ts` | The Gemini client: model constant, prompt, response schema, failure handling |
+| `src/lib/settings.ts` | The Gemini API key, stored apart from the learning data |
 | `src/lib/progress.ts` | Completion counts for a topic, a subject, and everything |
 | `src/lib/subject.ts` | Building a stored subject from a reviewed tree, and setting a status |
 | `src/lib/sampleData.ts` | The built-in sample subject |
@@ -51,6 +53,23 @@ is empty today — v1 is the only schema — but the plumbing is there so a futu
 schema change is an additive edit rather than a reason to discard saved
 progress.
 
+## Gemini
+
+Optional, and off until you add your own API key in Settings. The local parser
+always runs first; Gemini is only asked when the local read comes out ambiguous
+by the rule in `parseRoadmap.ts` (no structure found, no topics, or more than
+30% of topics with no subtopics).
+
+The key is held in `localStorage` under its own key and sent directly to
+Google from the browser. That is not a secure secret store, and the settings
+screen says so plainly rather than implying otherwise. It is kept separate from
+the learning data so that a backup export never carries it along.
+
+Every failure — offline, rejected key, rate limit, a response that doesn't match
+the schema — falls back to the local parser's result with a visible note
+explaining what happened. The model name lives in one exported constant,
+`GEMINI_MODEL`.
+
 ## Build status
 
 - [x] 1. Scaffold, data types, storage layer, reset action
@@ -58,7 +77,7 @@ progress.
 - [x] 3. Import flow UI (paste → parse → editable preview → save)
 - [x] 4. Tracker UI (sidebar, status toggles, completion %)
 - [x] 5. Re-import / merge logic
-- [ ] 6. Gemini API fallback + settings screen
+- [x] 6. Gemini API fallback + settings screen
 - [ ] 7. JSON export / import backup
 
 Out of scope for v1: notes, resources, spaced repetition, streaks, confidence

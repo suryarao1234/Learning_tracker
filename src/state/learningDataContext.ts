@@ -16,6 +16,9 @@ export type LearningDataContextValue = {
     subtopicId: string,
     status: SubtopicStatus,
   ) => void;
+  /** The Gemini key, or "" when none is set. Stored separately from the data. */
+  geminiApiKey: string;
+  setGeminiApiKey: (key: string) => void;
   /** Wipes stored data after the caller has confirmed with the user. */
   resetAll: () => void;
   /** Replaces current data with the built-in sample subject. */

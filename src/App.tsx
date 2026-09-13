@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { ImportModal } from "./components/ImportModal";
+import { SettingsModal } from "./components/SettingsModal";
 import { Sidebar } from "./components/Sidebar";
 import { StorageErrorBanner } from "./components/StorageErrorBanner";
 import { SubjectPanel } from "./components/SubjectPanel";
@@ -12,6 +13,7 @@ function Workspace() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [importOpen, setImportOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   // Derived rather than stored, so a selection that no longer exists (after a
   // reset, or after loading the sample data) falls back to the first subject
@@ -28,6 +30,7 @@ function Workspace() {
           selectedId={selected?.id ?? null}
           onSelect={setSelectedId}
           onImport={() => setImportOpen(true)}
+          onOpenSettings={() => setSettingsOpen(true)}
           open={sidebarOpen}
           onClose={() => setSidebarOpen(false)}
         />
@@ -36,6 +39,7 @@ function Workspace() {
       {importOpen && (
         <ImportModal onClose={() => setImportOpen(false)} onSaved={setSelectedId} />
       )}
+      {settingsOpen && <SettingsModal onClose={() => setSettingsOpen(false)} />}
     </div>
   );
 }

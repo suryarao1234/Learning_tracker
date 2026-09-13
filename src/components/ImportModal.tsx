@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useRef, useMemo, useState } from "react";
 import {
   fromDraft,
   toDraft,
@@ -6,12 +6,13 @@ import {
   type DraftError,
   type DraftSubject,
 } from "../lib/draft";
+import { GEMINI_MODEL, structureRoadmap } from "../lib/gemini";
 import { applyMergeDraft, toMergeDraft } from "../lib/merge";
 import { normalizeName } from "../lib/normalize";
 import { parseRoadmap, type ParseResult } from "../lib/parseRoadmap";
 import { subjectFromParsed } from "../lib/subject";
 import { useLearningData } from "../state/useLearningData";
-import type { Subject } from "../types";
+import type { ParsedSubject, Subject } from "../types";
 import { DraftTreeEditor } from "./DraftTreeEditor";
 import { MergeSummaryPanel } from "./MergeSummaryPanel";
 
@@ -20,7 +21,14 @@ type ImportModalProps = {
   onSaved: (subjectId: string) => void;
 };
 
-type Step = "paste" | "review";
+type Step = "paste" | "thinking" | "review";
+
+/**
+ * What happened on the Gemini path, when it was taken at all. A failure is
+ * recorded rather than thrown away: the local parser's result is still shown,
+ * and the user should be told why it wasn't improved on.
+ */
+type GeminiOutcome = { used: true } | { used: false; message: string };
 
 /**
  * Mounted only while an import is in progress — the caller renders it
@@ -29,13 +37,15 @@ type Step = "paste" | "review";
  * needing an effect to clear it.
  */
 export function ImportModal({ onClose, onSaved }: ImportModalProps) {
-  const { data, addSubject, updateSubject } = useLearningData();
+  const { data, addSubject, updateSubject, geminiApiKey } = useLearningData();
   const [step, setStep] = useState<Step>("paste");
   const [rawText, setRawText] = useState("");
   const [parseResult, setParseResult] = useState<ParseResult | null>(null);
   const [draft, setDraft] = useState<DraftSubject | null>(null);
   /** Set once the import is understood to be an update of an existing subject. */
   const [mergeTargetId, setMergeTargetId] = useState<string | null>(null);
+  const [geminiOutcome, setGeminiOutcome] = useState<GeminiOutcome | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
   const mergeTarget = useMemo(
     () => data.subjects.find((subject) => subject.id === mergeTargetId) ?? null,
@@ -62,19 +72,55 @@ export function ImportModal({ onClose, onSaved }: ImportModalProps) {
     return validateDraft(draft, otherNames);
   }, [draft, data.subjects, mergeTargetId]);
 
-  const handleParse = () => {
+  /** Sends a parsed subject to the review step, as a fresh import or a merge. */
+  const openReview = (subject: ParsedSubject) => {
+    const existing = findByName(subject.name);
+    if (existing) {
+      setMergeTargetId(existing.id);
+      setDraft(toMergeDraft(existing, subject));
+    } else {
+      setMergeTargetId(null);
+      setDraft(toDraft(subject));
+    }
+    setStep("review");
+  };
+
+  const handleParse = async () => {
     const result = parseRoadmap(rawText);
     setParseResult(result);
 
-    const existing = findByName(result.subject.name);
-    if (existing) {
-      setMergeTargetId(existing.id);
-      setDraft(toMergeDraft(existing, result.subject));
-    } else {
-      setMergeTargetId(null);
-      setDraft(toDraft(result.subject));
+    // The local parser is always run first, and its result is what's shown
+    // unless Gemini manages to do better. Gemini is only worth the round trip
+    // when the local read came out doubtful.
+    if (!result.ambiguous || !geminiApiKey) {
+      setGeminiOutcome(null);
+      openReview(result.subject);
+      return;
     }
-    setStep("review");
+
+    const controller = new AbortController();
+    abortRef.current = controller;
+    setStep("thinking");
+
+    const gemini = await structureRoadmap(rawText, geminiApiKey, controller.signal);
+    abortRef.current = null;
+
+    if (gemini.ok) {
+      setGeminiOutcome({ used: true });
+      openReview(gemini.subject);
+      return;
+    }
+    // Every failure — offline, bad key, rate limit, a response that didn't
+    // match the schema — lands on the local parser's best effort, with a note.
+    setGeminiOutcome(
+      gemini.reason === "cancelled" ? null : { used: false, message: gemini.message },
+    );
+    openReview(result.subject);
+  };
+
+  const handleCancelThinking = () => {
+    abortRef.current?.abort();
+    abortRef.current = null;
   };
 
   /** Turns an in-progress fresh import into a re-import of the named subject. */
@@ -85,9 +131,10 @@ export function ImportModal({ onClose, onSaved }: ImportModalProps) {
   };
 
   const handleBackToText = () => {
-    // The merge target came from the pasted text, so re-parsing decides it
-    // again rather than carrying a stale choice forward.
+    // The merge target and the Gemini outcome both came from the pasted text,
+    // so re-parsing decides them again rather than carrying stale ones forward.
     setMergeTargetId(null);
+    setGeminiOutcome(null);
     setStep("paste");
   };
 
@@ -106,7 +153,21 @@ export function ImportModal({ onClose, onSaved }: ImportModalProps) {
     onClose();
   };
 
-  const title = step === "paste" ? "Import a roadmap" : mergeTarget ? "Review the update" : "Review before saving";
+  const title =
+    step === "paste"
+      ? "Import a roadmap"
+      : step === "thinking"
+        ? "Asking Gemini"
+        : mergeTarget
+          ? "Review the update"
+          : "Review before saving";
+
+  const subtitle =
+    step === "paste"
+      ? "Paste a roadmap in Markdown or plain text. Nothing is saved until you've reviewed how it was read."
+      : step === "thinking"
+        ? "This roadmap didn't have a structure the local parser could read with confidence."
+        : "Rename, delete, merge or add anything before this is saved.";
 
   return (
     <div
@@ -120,16 +181,14 @@ export function ImportModal({ onClose, onSaved }: ImportModalProps) {
           <h2 id="import-modal-title" className="text-lg font-semibold text-slate-900">
             {title}
           </h2>
-          <p className="mt-1 text-sm text-slate-500">
-            {step === "paste"
-              ? "Paste a roadmap in Markdown or plain text. Nothing is saved until you've reviewed how it was read."
-              : "Rename, delete, merge or add anything before this is saved."}
-          </p>
+          <p className="mt-1 text-sm text-slate-500">{subtitle}</p>
         </header>
 
         <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
           {step === "paste" ? (
-            <PasteStep value={rawText} onChange={setRawText} />
+            <PasteStep value={rawText} onChange={setRawText} hasGeminiKey={geminiApiKey !== ""} />
+          ) : step === "thinking" ? (
+            <ThinkingStep />
           ) : (
             draft &&
             parseResult && (
@@ -138,6 +197,7 @@ export function ImportModal({ onClose, onSaved }: ImportModalProps) {
                 onChange={setDraft}
                 parseResult={parseResult}
                 mergeTarget={mergeTarget}
+                geminiOutcome={geminiOutcome}
                 collision={collision}
                 onMergeInstead={handleMergeInstead}
                 errors={validation?.errors ?? []}
@@ -158,14 +218,24 @@ export function ImportModal({ onClose, onSaved }: ImportModalProps) {
             </button>
           )}
           <div className="ml-auto flex gap-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
-            >
-              Cancel
-            </button>
-            {step === "paste" ? (
+            {step !== "thinking" && (
+              <button
+                type="button"
+                onClick={onClose}
+                className="rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              >
+                Cancel
+              </button>
+            )}
+            {step === "thinking" ? (
+              <button
+                type="button"
+                onClick={handleCancelThinking}
+                className="rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              >
+                Skip Gemini
+              </button>
+            ) : step === "paste" ? (
               <button
                 type="button"
                 disabled={rawText.trim() === ""}
@@ -191,12 +261,32 @@ export function ImportModal({ onClose, onSaved }: ImportModalProps) {
   );
 }
 
+function ThinkingStep() {
+  return (
+    <div className="flex flex-col items-center gap-3 py-16 text-center">
+      <span
+        className="h-6 w-6 animate-spin rounded-full border-2 border-slate-300 border-t-slate-700"
+        aria-hidden="true"
+      />
+      <p className="text-sm text-slate-600">
+        Asking {GEMINI_MODEL} to structure it instead…
+      </p>
+      <p className="max-w-sm text-xs text-slate-500">
+        Skip to review the local parser's best effort straight away. Nothing is saved
+        either way.
+      </p>
+    </div>
+  );
+}
+
 function PasteStep({
   value,
   onChange,
+  hasGeminiKey,
 }: {
   value: string;
   onChange: (value: string) => void;
+  hasGeminiKey: boolean;
 }) {
   return (
     <div>
@@ -217,6 +307,12 @@ function PasteStep({
         something a subtopic. Pasting an updated roadmap for a subject you already have
         updates it in place, keeping your progress.
       </p>
+      {hasGeminiKey && (
+        <p className="mt-1 text-xs text-slate-500">
+          If the structure isn't clear enough to read locally, Gemini will be asked to
+          structure it.
+        </p>
+      )}
     </div>
   );
 }
@@ -226,6 +322,7 @@ function ReviewStep({
   onChange,
   parseResult,
   mergeTarget,
+  geminiOutcome,
   collision,
   onMergeInstead,
   errors,
@@ -235,6 +332,7 @@ function ReviewStep({
   onChange: (draft: DraftSubject) => void;
   parseResult: ParseResult;
   mergeTarget: Subject | null;
+  geminiOutcome: GeminiOutcome | null;
   collision: Subject | null;
   onMergeInstead: (target: Subject) => void;
   errors: DraftError[];
@@ -250,7 +348,22 @@ function ReviewStep({
         />
       )}
 
-      {parseResult.ambiguous && (
+      {geminiOutcome?.used && (
+        <Notice tone="slate" title={null}>
+          Structured by {GEMINI_MODEL}, because the local parser couldn't read this
+          roadmap's structure with confidence. Check it over before saving.
+        </Notice>
+      )}
+
+      {geminiOutcome && !geminiOutcome.used && (
+        <Notice tone="amber" title="Gemini couldn't be used">
+          <p>{geminiOutcome.message}</p>
+          <p className="mt-1">Showing the local parser's best effort instead.</p>
+        </Notice>
+      )}
+
+      {/* The local parser's caveats only apply when its result is the one shown. */}
+      {!geminiOutcome?.used && parseResult.ambiguous && (
         <Notice tone="amber" title="This roadmap was hard to read">
           <ul className="list-inside list-disc">
             {parseResult.reasons.map((reason) => (
@@ -261,7 +374,7 @@ function ReviewStep({
         </Notice>
       )}
 
-      {parseResult.ignoredCount > 0 && (
+      {!geminiOutcome?.used && parseResult.ignoredCount > 0 && (
         <Notice tone="slate" title={null}>
           {parseResult.ignoredCount}{" "}
           {parseResult.ignoredCount === 1 ? "line was" : "lines were"} left out — code
