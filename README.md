@@ -35,6 +35,7 @@ small enough (dozens to low hundreds of topics) that a single JSON blob in
 | `src/lib/merge.ts` | Diffing a new roadmap against a stored subject, and applying the result |
 | `src/lib/gemini.ts` | The Gemini client: model constant, prompt, response schema, failure handling |
 | `src/lib/settings.ts` | The Gemini API key, stored apart from the learning data |
+| `src/lib/backup.ts` | Serializing, validating and merging a JSON backup file |
 | `src/lib/progress.ts` | Completion counts for a topic, a subject, and everything |
 | `src/lib/subject.ts` | Building a stored subject from a reviewed tree, and setting a status |
 | `src/lib/sampleData.ts` | The built-in sample subject |
@@ -70,6 +71,23 @@ the schema — falls back to the local parser's result with a visible note
 explaining what happened. The model name lives in one exported constant,
 `GEMINI_MODEL`.
 
+## Backup
+
+Settings exports the whole `LearningData` object as a dated `.json` file, and
+imports one back. An imported file is untrusted input like anything else read
+from outside the app, so it runs through the same normalizer as stored data:
+a file that isn't JSON, or has no `schemaVersion`, is refused with a reason,
+and a hand-edited one is repaired rather than rejected.
+
+Import offers two outcomes. **Replace** swaps everything, and says so in red.
+**Merge** adds only the subjects you don't already have, reassigning IDs so
+nothing can collide, and names the ones it left out. Merge deliberately doesn't
+try to combine two versions of the same subject: that would mean silently
+picking a winner for every status that differs, and getting it wrong loses
+progress that can't be recovered.
+
+Backups never contain the Gemini API key.
+
 ## Build status
 
 - [x] 1. Scaffold, data types, storage layer, reset action
@@ -78,7 +96,9 @@ explaining what happened. The model name lives in one exported constant,
 - [x] 4. Tracker UI (sidebar, status toggles, completion %)
 - [x] 5. Re-import / merge logic
 - [x] 6. Gemini API fallback + settings screen
-- [ ] 7. JSON export / import backup
+- [x] 7. JSON export / import backup
+
+All seven milestones are done.
 
 Out of scope for v1: notes, resources, spaced repetition, streaks, confidence
 scores.
