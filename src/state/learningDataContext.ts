@@ -7,6 +7,8 @@ export type LearningDataContextValue = {
   setData: (updater: LearningData | ((prev: LearningData) => LearningData)) => void;
   /** Appends a fully-formed subject, IDs already assigned. */
   addSubject: (subject: Subject) => void;
+  /** Replaces a subject in place, matched by ID. Used by the re-import merge. */
+  updateSubject: (subject: Subject) => void;
   /** Marks one subtopic. A no-op click changes nothing and saves nothing. */
   setSubtopicStatus: (
     subjectId: string,

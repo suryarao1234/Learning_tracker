@@ -32,6 +32,7 @@ small enough (dozens to low hundreds of topics) that a single JSON blob in
 | `src/lib/parseRoadmap.ts` | The local Markdown / plain-text parser and its ambiguity check |
 | `src/lib/normalize.ts` | Name cleanup and the normalized key used for matching and merging |
 | `src/lib/draft.ts` | The editable form of a parsed subject, its edit operations and validation |
+| `src/lib/merge.ts` | Diffing a new roadmap against a stored subject, and applying the result |
 | `src/lib/progress.ts` | Completion counts for a topic, a subject, and everything |
 | `src/lib/subject.ts` | Building a stored subject from a reviewed tree, and setting a status |
 | `src/lib/sampleData.ts` | The built-in sample subject |
@@ -56,7 +57,7 @@ progress.
 - [x] 2. Local Markdown/list parser
 - [x] 3. Import flow UI (paste → parse → editable preview → save)
 - [x] 4. Tracker UI (sidebar, status toggles, completion %)
-- [ ] 5. Re-import / merge logic
+- [x] 5. Re-import / merge logic
 - [ ] 6. Gemini API fallback + settings screen
 - [ ] 7. JSON export / import backup
 

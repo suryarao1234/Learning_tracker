@@ -1,9 +1,19 @@
 import { useMemo, useState } from "react";
-import { fromDraft, toDraft, validateDraft, type DraftSubject } from "../lib/draft";
+import {
+  fromDraft,
+  toDraft,
+  validateDraft,
+  type DraftError,
+  type DraftSubject,
+} from "../lib/draft";
+import { applyMergeDraft, toMergeDraft } from "../lib/merge";
+import { normalizeName } from "../lib/normalize";
 import { parseRoadmap, type ParseResult } from "../lib/parseRoadmap";
 import { subjectFromParsed } from "../lib/subject";
 import { useLearningData } from "../state/useLearningData";
+import type { Subject } from "../types";
 import { DraftTreeEditor } from "./DraftTreeEditor";
+import { MergeSummaryPanel } from "./MergeSummaryPanel";
 
 type ImportModalProps = {
   onClose: () => void;
@@ -19,35 +29,84 @@ type Step = "paste" | "review";
  * needing an effect to clear it.
  */
 export function ImportModal({ onClose, onSaved }: ImportModalProps) {
-  const { data, addSubject } = useLearningData();
+  const { data, addSubject, updateSubject } = useLearningData();
   const [step, setStep] = useState<Step>("paste");
   const [rawText, setRawText] = useState("");
   const [parseResult, setParseResult] = useState<ParseResult | null>(null);
   const [draft, setDraft] = useState<DraftSubject | null>(null);
+  /** Set once the import is understood to be an update of an existing subject. */
+  const [mergeTargetId, setMergeTargetId] = useState<string | null>(null);
 
-  const existingNames = useMemo(
-    () => data.subjects.map((subject) => subject.name),
-    [data.subjects],
+  const mergeTarget = useMemo(
+    () => data.subjects.find((subject) => subject.id === mergeTargetId) ?? null,
+    [data.subjects, mergeTargetId],
   );
-  const validation = useMemo(
-    () => (draft ? validateDraft(draft, existingNames) : null),
-    [draft, existingNames],
-  );
+
+  const findByName = (name: string): Subject | undefined => {
+    const key = normalizeName(name);
+    return key ? data.subjects.find((s) => normalizeName(s.name) === key) : undefined;
+  };
+
+  // The subject whose name this draft collides with, when we aren't already
+  // merging into it. That's an offer to merge, not a dead end. Cheap enough to
+  // derive on every render.
+  const collision = draft && !mergeTargetId ? (findByName(draft.name) ?? null) : null;
+
+  const validation = useMemo(() => {
+    if (!draft) return null;
+    // A re-import is expected to reuse its target's name, so that one name
+    // doesn't count as a collision.
+    const otherNames = data.subjects
+      .filter((subject) => subject.id !== mergeTargetId)
+      .map((subject) => subject.name);
+    return validateDraft(draft, otherNames);
+  }, [draft, data.subjects, mergeTargetId]);
 
   const handleParse = () => {
     const result = parseRoadmap(rawText);
     setParseResult(result);
-    setDraft(toDraft(result.subject));
+
+    const existing = findByName(result.subject.name);
+    if (existing) {
+      setMergeTargetId(existing.id);
+      setDraft(toMergeDraft(existing, result.subject));
+    } else {
+      setMergeTargetId(null);
+      setDraft(toDraft(result.subject));
+    }
     setStep("review");
+  };
+
+  /** Turns an in-progress fresh import into a re-import of the named subject. */
+  const handleMergeInstead = (target: Subject) => {
+    if (!draft) return;
+    setMergeTargetId(target.id);
+    setDraft(toMergeDraft(target, fromDraft(draft)));
+  };
+
+  const handleBackToText = () => {
+    // The merge target came from the pasted text, so re-parsing decides it
+    // again rather than carrying a stale choice forward.
+    setMergeTargetId(null);
+    setStep("paste");
   };
 
   const handleSave = () => {
     if (!draft || !validation || validation.errors.length > 0) return;
-    const subject = subjectFromParsed(fromDraft(draft), rawText);
-    addSubject(subject);
-    onSaved(subject.id);
+
+    if (mergeTarget) {
+      const merged = applyMergeDraft(mergeTarget, draft, rawText);
+      updateSubject(merged);
+      onSaved(merged.id);
+    } else {
+      const subject = subjectFromParsed(fromDraft(draft), rawText);
+      addSubject(subject);
+      onSaved(subject.id);
+    }
     onClose();
   };
+
+  const title = step === "paste" ? "Import a roadmap" : mergeTarget ? "Review the update" : "Review before saving";
 
   return (
     <div
@@ -59,12 +118,12 @@ export function ImportModal({ onClose, onSaved }: ImportModalProps) {
       <div className="flex max-h-[88vh] w-full max-w-3xl flex-col rounded-lg bg-white shadow-xl">
         <header className="border-b border-slate-200 px-5 py-4">
           <h2 id="import-modal-title" className="text-lg font-semibold text-slate-900">
-            {step === "paste" ? "Import a roadmap" : "Review before saving"}
+            {title}
           </h2>
           <p className="mt-1 text-sm text-slate-500">
             {step === "paste"
               ? "Paste a roadmap in Markdown or plain text. Nothing is saved until you've reviewed how it was read."
-              : "Rename, delete, merge or add anything before this becomes a subject."}
+              : "Rename, delete, merge or add anything before this is saved."}
           </p>
         </header>
 
@@ -78,6 +137,9 @@ export function ImportModal({ onClose, onSaved }: ImportModalProps) {
                 draft={draft}
                 onChange={setDraft}
                 parseResult={parseResult}
+                mergeTarget={mergeTarget}
+                collision={collision}
+                onMergeInstead={handleMergeInstead}
                 errors={validation?.errors ?? []}
                 warnings={validation?.warnings ?? []}
               />
@@ -89,7 +151,7 @@ export function ImportModal({ onClose, onSaved }: ImportModalProps) {
           {step === "review" && (
             <button
               type="button"
-              onClick={() => setStep("paste")}
+              onClick={handleBackToText}
               className="rounded-md px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-100"
             >
               ← Back to text
@@ -119,7 +181,7 @@ export function ImportModal({ onClose, onSaved }: ImportModalProps) {
                 onClick={handleSave}
                 className="rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-300"
               >
-                Save subject
+                {mergeTarget ? "Save changes" : "Save subject"}
               </button>
             )}
           </div>
@@ -152,7 +214,8 @@ function PasteStep({
       />
       <p className="mt-2 text-xs text-slate-500">
         Headings, bullet lists and numbered lists are all understood. Indentation makes
-        something a subtopic.
+        something a subtopic. Pasting an updated roadmap for a subject you already have
+        updates it in place, keeping your progress.
       </p>
     </div>
   );
@@ -162,17 +225,31 @@ function ReviewStep({
   draft,
   onChange,
   parseResult,
+  mergeTarget,
+  collision,
+  onMergeInstead,
   errors,
   warnings,
 }: {
   draft: DraftSubject;
   onChange: (draft: DraftSubject) => void;
   parseResult: ParseResult;
-  errors: string[];
+  mergeTarget: Subject | null;
+  collision: Subject | null;
+  onMergeInstead: (target: Subject) => void;
+  errors: DraftError[];
   warnings: string[];
 }) {
   return (
     <div className="space-y-4">
+      {mergeTarget && (
+        <MergeSummaryPanel
+          draft={draft}
+          onChange={onChange}
+          existingName={mergeTarget.name}
+        />
+      )}
+
       {parseResult.ambiguous && (
         <Notice tone="amber" title="This roadmap was hard to read">
           <ul className="list-inside list-disc">
@@ -193,8 +270,19 @@ function ReviewStep({
       )}
 
       {errors.map((error) => (
-        <Notice key={error} tone="red" title={null}>
-          {error}
+        <Notice key={error.code} tone="red" title={null}>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="flex-1">{error.message}</span>
+            {error.code === "duplicate-name" && collision && (
+              <button
+                type="button"
+                onClick={() => onMergeInstead(collision)}
+                className="shrink-0 rounded-md border border-red-300 bg-white px-2 py-1 text-xs font-medium text-red-800 hover:bg-red-100"
+              >
+                Merge into it instead
+              </button>
+            )}
+          </div>
         </Notice>
       ))}
 
@@ -204,7 +292,7 @@ function ReviewStep({
         </Notice>
       ))}
 
-      <DraftTreeEditor draft={draft} onChange={onChange} />
+      <DraftTreeEditor draft={draft} onChange={onChange} showOrigins={mergeTarget !== null} />
     </div>
   );
 }

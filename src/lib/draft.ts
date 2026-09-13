@@ -1,4 +1,4 @@
-import type { ParsedSubject } from "../types";
+import type { ParsedSubject, SubtopicStatus } from "../types";
 import { newId } from "./id";
 import { normalizeName } from "./normalize";
 
@@ -10,9 +10,30 @@ import { normalizeName } from "./normalize";
  * React needs a stable identity for each row so that editing one name doesn't
  * remount the inputs around it, and the parsed tree has no IDs of its own yet.
  * Real IDs are assigned on save.
+ *
+ * A fresh import fills in nothing else. A re-import additionally carries, per
+ * row, the stored node it corresponds to and which bucket it falls in, so the
+ * same editor can show the new/matched/removed grouping.
  */
-export type DraftSubtopic = { key: string; name: string };
-export type DraftTopic = { key: string; name: string; subtopics: DraftSubtopic[] };
+export type DraftOrigin = "new" | "matched" | "removed";
+
+type DraftMergeFields = {
+  /** The stored node this row came from. Absent on a genuinely new row. */
+  id?: string;
+  /** Preserved from the stored node, so progress survives the re-import. */
+  status?: SubtopicStatus;
+  /** Which bucket this row is in. Absent outside a re-import. */
+  origin?: DraftOrigin;
+  /** For `removed` rows only: false means drop it on save. */
+  keep?: boolean;
+};
+
+export type DraftSubtopic = { key: string; name: string } & DraftMergeFields;
+export type DraftTopic = {
+  key: string;
+  name: string;
+  subtopics: DraftSubtopic[];
+} & DraftMergeFields;
 export type DraftSubject = { name: string; topics: DraftTopic[] };
 
 export function toDraft(parsed: ParsedSubject): DraftSubject {
@@ -72,7 +93,10 @@ export function setSubjectName(draft: DraftSubject, name: string): DraftSubject 
 }
 
 export function addTopic(draft: DraftSubject): DraftSubject {
-  return { ...draft, topics: [...draft.topics, { key: newId("dt"), name: "", subtopics: [] }] };
+  return {
+    ...draft,
+    topics: [...draft.topics, { key: newId("dt"), name: "", subtopics: [], origin: "new" }],
+  };
 }
 
 export function renameTopic(
@@ -102,7 +126,7 @@ export function mergeTopicIntoPrevious(draft: DraftSubject, topicKey: string): D
     ...previous,
     subtopics: [
       ...previous.subtopics,
-      { key: newId("ds"), name: merged.name },
+      { key: newId("ds"), name: merged.name, origin: merged.origin },
       ...merged.subtopics,
     ],
   };
@@ -129,7 +153,7 @@ function dedupeSubtopicNames(topic: DraftTopic): DraftTopic {
 export function addSubtopic(draft: DraftSubject, topicKey: string): DraftSubject {
   return mapTopic(draft, topicKey, (topic) => ({
     ...topic,
-    subtopics: [...topic.subtopics, { key: newId("ds"), name: "" }],
+    subtopics: [...topic.subtopics, { key: newId("ds"), name: "", origin: "new" }],
   }));
 }
 
@@ -162,9 +186,18 @@ export function deleteSubtopic(
  * Validation
  * ------------------------------------------------------------------ */
 
+/**
+ * Blocking problems carry a code as well as a message: the UI acts on some of
+ * them (a name collision is an offer to merge, not just a complaint), and
+ * matching on the message text would break the moment the wording changed.
+ */
+export type DraftErrorCode = "no-name" | "no-topics" | "duplicate-name";
+
+export type DraftError = { code: DraftErrorCode; message: string };
+
 export type DraftValidation = {
   /** Blocking problems. Saving is disabled while any of these stand. */
-  errors: string[];
+  errors: DraftError[];
   /** Worth knowing, but the user may well have meant it. */
   warnings: string[];
 };
@@ -173,20 +206,23 @@ export function validateDraft(
   draft: DraftSubject,
   existingSubjectNames: string[],
 ): DraftValidation {
-  const errors: string[] = [];
+  const errors: DraftError[] = [];
   const warnings: string[] = [];
   const cleaned = fromDraft(draft);
 
   if (!cleaned.name) {
-    errors.push("Give the subject a name.");
-  } else if (existingSubjectNames.some((name) => normalizeName(name) === normalizeName(cleaned.name))) {
-    errors.push(
-      `A subject called "${cleaned.name}" already exists. Rename this one for now — merging into an existing subject arrives with the re-import flow.`,
-    );
+    errors.push({ code: "no-name", message: "Give the subject a name." });
+  } else if (
+    existingSubjectNames.some((name) => normalizeName(name) === normalizeName(cleaned.name))
+  ) {
+    errors.push({
+      code: "duplicate-name",
+      message: `A subject called "${cleaned.name}" already exists. Rename this one, or merge into it.`,
+    });
   }
 
   if (cleaned.topics.length === 0) {
-    errors.push("Add at least one topic.");
+    errors.push({ code: "no-topics", message: "Add at least one topic." });
   }
 
   const seen = new Set<string>();

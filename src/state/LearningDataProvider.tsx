@@ -32,6 +32,15 @@ export function LearningDataProvider({ children }: { children: ReactNode }) {
     setDataState((prev) => ({ ...prev, subjects: [...prev.subjects, subject] }));
   }, []);
 
+  const updateSubject = useCallback((subject: Subject) => {
+    setDataState((prev) => ({
+      ...prev,
+      subjects: prev.subjects.map((existing) =>
+        existing.id === subject.id ? subject : existing,
+      ),
+    }));
+  }, []);
+
   const setSubtopicStatus = useCallback(
     (subjectId: string, topicId: string, subtopicId: string, status: SubtopicStatus) => {
       setDataState((prev) =>
@@ -56,6 +65,7 @@ export function LearningDataProvider({ children }: { children: ReactNode }) {
       data,
       setData,
       addSubject,
+      updateSubject,
       setSubtopicStatus,
       resetAll,
       loadSample,
@@ -66,6 +76,7 @@ export function LearningDataProvider({ children }: { children: ReactNode }) {
       data,
       setData,
       addSubject,
+      updateSubject,
       setSubtopicStatus,
       resetAll,
       loadSample,

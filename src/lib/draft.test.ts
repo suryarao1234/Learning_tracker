@@ -144,14 +144,13 @@ describe("validateDraft", () => {
 
   it("requires a subject name and at least one topic", () => {
     const { errors } = validateDraft({ name: "  ", topics: [] }, []);
-    expect(errors).toHaveLength(2);
-    expect(errors.join(" ")).toContain("name");
-    expect(errors.join(" ")).toContain("topic");
+    expect(errors.map((e) => e.code)).toEqual(["no-name", "no-topics"]);
   });
 
   it("blocks a name that collides with an existing subject, ignoring case and spacing", () => {
     const { errors } = validateDraft(draftOf(SAMPLE), ["  go  "]);
-    expect(errors.join(" ")).toContain("already exists");
+    expect(errors.map((e) => e.code)).toEqual(["duplicate-name"]);
+    expect(errors[0].message).toContain("already exists");
   });
 
   it("does not block a name that merely resembles an existing one", () => {
