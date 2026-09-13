@@ -36,11 +36,40 @@ small enough (dozens to low hundreds of topics) that a single JSON blob in
 | `src/lib/gemini.ts` | The Gemini client: model constant, prompt, response schema, failure handling |
 | `src/lib/settings.ts` | The Gemini API key, stored apart from the learning data |
 | `src/lib/backup.ts` | Serializing, validating and merging a JSON backup file |
+| `src/lib/accent.ts` | The per-subject colour, and the contrast-safe pairings it ships with |
+| `src/lib/overview.ts` | What the dashboard derives: greeting, what's next, what to resume |
 | `src/lib/progress.ts` | Completion counts for a topic, a subject, and everything |
 | `src/lib/subject.ts` | Building a stored subject from a reviewed tree, and setting a status |
 | `src/lib/sampleData.ts` | The built-in sample subject |
 | `src/state/` | The Context that holds `LearningData` and persists it on change |
 | `src/components/` | Shared UI pieces |
+
+## Look and feel
+
+A warm cream canvas with white cards, rounded corners and a rounded display
+face, so tracking progress reads as something pleasant rather than a
+spreadsheet. The shell is a sidebar of subjects, an overview dashboard, and a
+subject detail view.
+
+Colour is used in two separate roles, and they never mix:
+
+- **Subject accents** — identity only. Three hues, assigned from the subject's
+  own ID so the colour follows the subject rather than its position in a list.
+  Validated with the dataviz palette checker under all-pairs (any two subjects
+  can end up adjacent): lightness band, chroma floor, colour-vision separation
+  and normal-vision separation all pass. Green is deliberately excluded.
+- **Status** — green for done, amber for in progress, reserved and never reused
+  as an accent, and always carried by a text label rather than colour alone.
+
+Every text-on-colour pairing was measured rather than eyeballed. White sits on
+the blue accent at 5.7:1, but only 2.2:1 on the orange and 2.7:1 on the pink, so
+those two carry dark ink instead (6.9:1 and 5.8:1) and the hero stays vibrant.
+Letter avatars use a tint of the accent with its own deep ink for the same
+reason.
+
+Everything on the dashboard is derived from what's tracked. There are no
+streaks, no study-time totals and no schedule, because the app stores none of
+those and showing them would be invention.
 
 ## Storage notes
 

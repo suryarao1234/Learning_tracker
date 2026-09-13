@@ -1,4 +1,5 @@
 import { useState } from "react";
+import type { Accent } from "../lib/accent";
 import { topicProgress } from "../lib/progress";
 import type { SubtopicStatus, Topic } from "../types";
 import { ProgressBar } from "./ProgressBar";
@@ -6,53 +7,78 @@ import { StatusToggle } from "./StatusToggle";
 
 type TopicCardProps = {
   topic: Topic;
+  accent: Accent;
   onStatusChange: (subtopicId: string, status: SubtopicStatus) => void;
 };
 
-export function TopicCard({ topic, onStatusChange }: TopicCardProps) {
+export function TopicCard({ topic, accent, onStatusChange }: TopicCardProps) {
   const [expanded, setExpanded] = useState(true);
   const progress = topicProgress(topic);
   const panelId = `topic-panel-${topic.id}`;
+  const complete = progress.total > 0 && progress.percent === 100;
 
   return (
-    <li className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+    <li className="overflow-hidden rounded-2xl bg-card shadow-sm ring-1 ring-line">
       <button
         type="button"
         onClick={() => setExpanded((value) => !value)}
         aria-expanded={expanded}
         aria-controls={panelId}
-        className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-slate-50"
+        className="flex w-full items-center gap-3 p-4 text-left transition hover:bg-canvas"
       >
-        <Chevron expanded={expanded} />
+        <span
+          aria-hidden="true"
+          className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg transition-transform ${
+            accent.soft
+          } ${expanded ? "rotate-90" : ""}`}
+        >
+          <svg viewBox="0 0 12 12" className={`h-3 w-3 ${accent.text}`} fill="none">
+            <path
+              d="M4.5 2 8.5 6l-4 4"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </span>
+
         <span className="min-w-0 flex-1">
-          <span className="block truncate font-medium text-slate-900">{topic.name}</span>
+          <span className="block truncate text-sm font-extrabold text-ink">{topic.name}</span>
+          <span className="mt-1 flex items-center gap-2">
+            <ProgressBar
+              percent={progress.percent}
+              inProgressPercent={progress.inProgressPercent}
+              className="max-w-40"
+            />
+            <span className="shrink-0 text-xs font-bold tabular-nums text-ink-mute">
+              {progress.done}/{progress.total}
+            </span>
+          </span>
         </span>
-        <span className="hidden w-32 shrink-0 sm:block">
-          <ProgressBar
-            percent={progress.percent}
-            inProgressPercent={progress.inProgressPercent}
-          />
-        </span>
-        <span className="w-12 shrink-0 text-right text-xs tabular-nums text-slate-500">
-          {progress.done}/{progress.total}
-        </span>
+
+        {complete && (
+          <span className="shrink-0 rounded-full bg-done-soft px-2.5 py-1 text-[11px] font-bold text-done-ink">
+            Done
+          </span>
+        )}
       </button>
 
       {expanded && (
-        <ul id={panelId} className="border-t border-slate-100 px-4 py-2">
+        <ul id={panelId} className="border-t border-line px-3 py-1.5">
           {topic.subtopics.length === 0 ? (
-            <li className="py-2 text-sm text-slate-400">No subtopics.</li>
+            <li className="px-1 py-3 text-sm text-ink-mute">No subtopics.</li>
           ) : (
             topic.subtopics.map((subtopic) => (
               <li
                 key={subtopic.id}
-                className="flex flex-wrap items-center gap-x-3 gap-y-1 py-1.5"
+                className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl px-1 py-2 transition hover:bg-canvas"
               >
                 <span
-                  className={`min-w-0 flex-1 text-sm ${
+                  className={`min-w-0 flex-1 text-sm font-semibold ${
                     subtopic.status === "done"
-                      ? "text-slate-400 line-through"
-                      : "text-slate-700"
+                      ? "text-ink-mute line-through"
+                      : "text-ink-soft"
                   }`}
                 >
                   {subtopic.name}
@@ -68,19 +94,5 @@ export function TopicCard({ topic, onStatusChange }: TopicCardProps) {
         </ul>
       )}
     </li>
-  );
-}
-
-function Chevron({ expanded }: { expanded: boolean }) {
-  return (
-    <svg
-      viewBox="0 0 12 12"
-      aria-hidden="true"
-      className={`h-3 w-3 shrink-0 text-slate-400 transition-transform ${
-        expanded ? "rotate-90" : ""
-      }`}
-    >
-      <path d="M4 2l4 4-4 4" fill="none" stroke="currentColor" strokeWidth="1.8" />
-    </svg>
   );
 }

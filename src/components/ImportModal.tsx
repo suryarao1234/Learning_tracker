@@ -171,17 +171,17 @@ export function ImportModal({ onClose, onSaved }: ImportModalProps) {
 
   return (
     <div
-      className="fixed inset-0 z-40 flex items-center justify-center bg-slate-900/50 p-4"
+      className="fixed inset-0 z-40 flex items-center justify-center bg-ink/40 p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby="import-modal-title"
     >
-      <div className="flex max-h-[88vh] w-full max-w-3xl flex-col rounded-lg bg-white shadow-xl">
-        <header className="border-b border-slate-200 px-5 py-4">
-          <h2 id="import-modal-title" className="text-lg font-semibold text-slate-900">
+      <div className="flex max-h-[88vh] w-full max-w-3xl flex-col rounded-3xl bg-card shadow-2xl">
+        <header className="border-b border-line px-5 py-4">
+          <h2 id="import-modal-title" className="text-lg font-semibold text-ink">
             {title}
           </h2>
-          <p className="mt-1 text-sm text-slate-500">{subtitle}</p>
+          <p className="mt-1 text-sm text-ink-mute">{subtitle}</p>
         </header>
 
         <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
@@ -207,12 +207,12 @@ export function ImportModal({ onClose, onSaved }: ImportModalProps) {
           )}
         </div>
 
-        <footer className="flex items-center gap-2 border-t border-slate-200 px-5 py-3">
+        <footer className="flex items-center gap-2 border-t border-line px-5 py-3">
           {step === "review" && (
             <button
               type="button"
               onClick={handleBackToText}
-              className="rounded-md px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-100"
+              className="rounded-xl px-3 py-1.5 text-sm font-bold text-ink-soft hover:bg-canvas"
             >
               ← Back to text
             </button>
@@ -222,7 +222,7 @@ export function ImportModal({ onClose, onSaved }: ImportModalProps) {
               <button
                 type="button"
                 onClick={onClose}
-                className="rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                className="rounded-xl border border-line px-3 py-1.5 text-sm font-bold text-ink-soft hover:bg-canvas"
               >
                 Cancel
               </button>
@@ -231,7 +231,7 @@ export function ImportModal({ onClose, onSaved }: ImportModalProps) {
               <button
                 type="button"
                 onClick={handleCancelThinking}
-                className="rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                className="rounded-xl border border-line px-3 py-1.5 text-sm font-bold text-ink-soft hover:bg-canvas"
               >
                 Skip Gemini
               </button>
@@ -240,7 +240,7 @@ export function ImportModal({ onClose, onSaved }: ImportModalProps) {
                 type="button"
                 disabled={rawText.trim() === ""}
                 onClick={handleParse}
-                className="rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-300"
+                className="rounded-xl bg-brand px-3.5 py-2 text-sm font-bold text-white transition hover:bg-brand-ink disabled:cursor-not-allowed disabled:bg-ink-mute/40"
               >
                 Parse roadmap
               </button>
@@ -249,7 +249,7 @@ export function ImportModal({ onClose, onSaved }: ImportModalProps) {
                 type="button"
                 disabled={(validation?.errors.length ?? 1) > 0}
                 onClick={handleSave}
-                className="rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-300"
+                className="rounded-xl bg-brand px-3.5 py-2 text-sm font-bold text-white transition hover:bg-brand-ink disabled:cursor-not-allowed disabled:bg-ink-mute/40"
               >
                 {mergeTarget ? "Save changes" : "Save subject"}
               </button>
@@ -265,13 +265,13 @@ function ThinkingStep() {
   return (
     <div className="flex flex-col items-center gap-3 py-16 text-center">
       <span
-        className="h-6 w-6 animate-spin rounded-full border-2 border-slate-300 border-t-slate-700"
+        className="h-6 w-6 animate-spin rounded-full border-2 border-line border-t-brand"
         aria-hidden="true"
       />
-      <p className="text-sm text-slate-600">
+      <p className="text-sm text-ink-soft">
         Asking {GEMINI_MODEL} to structure it instead…
       </p>
-      <p className="max-w-sm text-xs text-slate-500">
+      <p className="max-w-sm text-xs text-ink-mute">
         Skip to review the local parser's best effort straight away. Nothing is saved
         either way.
       </p>
@@ -300,15 +300,15 @@ function PasteStep({
         onChange={(event) => onChange(event.target.value)}
         spellCheck={false}
         placeholder={"# Subject\n\n## First topic\n- A subtopic\n- Another subtopic\n\n## Second topic\n- ..."}
-        className="h-80 w-full resize-y rounded-md border border-slate-300 p-3 font-mono text-sm text-slate-800 focus:border-slate-500 focus:outline-none"
+        className="h-80 w-full resize-y rounded-xl border border-line p-3 font-mono text-sm text-ink focus:border-brand focus:outline-none"
       />
-      <p className="mt-2 text-xs text-slate-500">
+      <p className="mt-2 text-xs text-ink-mute">
         Headings, bullet lists and numbered lists are all understood. Indentation makes
         something a subtopic. Pasting an updated roadmap for a subject you already have
         updates it in place, keeping your progress.
       </p>
       {hasGeminiKey && (
-        <p className="mt-1 text-xs text-slate-500">
+        <p className="mt-1 text-xs text-ink-mute">
           If the structure isn't clear enough to read locally, Gemini will be asked to
           structure it.
         </p>
@@ -390,7 +390,7 @@ function ReviewStep({
               <button
                 type="button"
                 onClick={() => onMergeInstead(collision)}
-                className="shrink-0 rounded-md border border-red-300 bg-white px-2 py-1 text-xs font-medium text-red-800 hover:bg-red-100"
+                className="shrink-0 rounded-xl border border-red-300 bg-white px-2 py-1 text-xs font-bold text-red-800 hover:bg-red-100"
               >
                 Merge into it instead
               </button>
@@ -411,9 +411,9 @@ function ReviewStep({
 }
 
 const NOTICE_TONES = {
-  amber: "border-amber-200 bg-amber-50 text-amber-900",
+  amber: "border-doing/25 bg-doing-soft text-doing-ink",
   red: "border-red-200 bg-red-50 text-red-800",
-  slate: "border-slate-200 bg-slate-50 text-slate-600",
+  slate: "border-line bg-canvas text-ink-soft",
 } as const;
 
 function Notice({
@@ -426,8 +426,8 @@ function Notice({
   children: React.ReactNode;
 }) {
   return (
-    <div className={`rounded-md border px-3 py-2 text-sm ${NOTICE_TONES[tone]}`}>
-      {title && <p className="font-medium">{title}</p>}
+    <div className={`rounded-xl border px-3 py-2 text-sm ${NOTICE_TONES[tone]}`}>
+      {title && <p className="font-bold">{title}</p>}
       {children}
     </div>
   );

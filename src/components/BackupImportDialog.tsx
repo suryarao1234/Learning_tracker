@@ -47,22 +47,22 @@ export function BackupImportDialog({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby="backup-import-title"
     >
-      <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
-        <h2 id="backup-import-title" className="text-lg font-semibold text-slate-900">
+      <div className="w-full max-w-md rounded-3xl bg-card p-6 shadow-2xl">
+        <h2 id="backup-import-title" className="text-lg font-semibold text-ink">
           Import this backup?
         </h2>
-        <p className="mt-2 text-sm text-slate-600">
+        <p className="mt-2 text-sm text-ink-soft">
           The file holds {describe(counts)}.
           {hasCurrent && ` You currently have ${describe(currentCounts)}.`}
         </p>
 
         {warning && (
-          <p className="mt-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+          <p className="mt-3 rounded-xl border border-doing/25 bg-doing-soft px-3 py-2 text-sm font-semibold text-doing-ink">
             {warning}
           </p>
         )}
@@ -72,10 +72,10 @@ export function BackupImportDialog({
             <button
               type="button"
               onClick={onMerge}
-              className="w-full rounded-md bg-slate-900 px-3 py-2 text-left text-sm font-medium text-white hover:bg-slate-800"
+              className="w-full rounded-xl bg-brand px-3.5 py-2.5 text-left text-sm font-bold text-white transition hover:bg-brand-ink"
             >
               Merge
-              <span className="mt-0.5 block text-xs font-normal text-slate-300">
+              <span className="mt-0.5 block text-xs font-normal text-white/75">
                 Adds subjects you don't already have. Nothing you're tracking changes.
               </span>
             </button>
@@ -85,8 +85,8 @@ export function BackupImportDialog({
             onClick={onReplace}
             className={
               hasCurrent
-                ? "w-full rounded-md border border-red-300 bg-white px-3 py-2 text-left text-sm font-medium text-red-800 hover:bg-red-50"
-                : "w-full rounded-md bg-slate-900 px-3 py-2 text-left text-sm font-medium text-white hover:bg-slate-800"
+                ? "w-full rounded-xl border border-red-300 bg-white px-3 py-2 text-left text-sm font-bold text-red-800 hover:bg-red-50"
+                : "w-full rounded-xl bg-brand px-3.5 py-2.5 text-left text-sm font-bold text-white transition hover:bg-brand-ink"
             }
           >
             {hasCurrent ? "Replace everything" : "Import"}
@@ -102,7 +102,7 @@ export function BackupImportDialog({
           <button
             type="button"
             onClick={onCancel}
-            className="rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            className="rounded-xl border border-line px-3 py-1.5 text-sm font-bold text-ink-soft hover:bg-canvas"
           >
             Cancel
           </button>

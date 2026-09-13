@@ -1,17 +1,30 @@
 import type { SubtopicStatus } from "../types";
 
-const OPTIONS: { value: SubtopicStatus; label: string; activeClass: string }[] = [
+/**
+ * The reserved status palette: one colour per state, never reused for subject
+ * accents, and always carrying its own text label so the state is never
+ * conveyed by colour alone.
+ */
+const OPTIONS: { value: SubtopicStatus; label: string; short: string; activeClass: string }[] = [
   {
     value: "not-started",
     label: "Not started",
-    activeClass: "bg-slate-200 text-slate-800",
+    short: "Todo",
+    // Selected-but-untouched should not be the loudest thing on the row.
+    activeClass: "bg-card text-ink shadow-sm ring-1 ring-line",
   },
   {
     value: "in-progress",
     label: "In progress",
-    activeClass: "bg-amber-200 text-amber-900",
+    short: "Doing",
+    activeClass: "bg-doing-soft text-doing-ink ring-1 ring-doing/30",
   },
-  { value: "done", label: "Done", activeClass: "bg-emerald-200 text-emerald-900" },
+  {
+    value: "done",
+    label: "Done",
+    short: "Done",
+    activeClass: "bg-done-soft text-done-ink ring-1 ring-done/30",
+  },
 ];
 
 type StatusToggleProps = {
@@ -31,7 +44,7 @@ export function StatusToggle({ value, onChange, label }: StatusToggleProps) {
     <div
       role="group"
       aria-label={`Status for ${label}`}
-      className="flex shrink-0 gap-0.5 rounded-md bg-slate-100 p-0.5"
+      className="flex shrink-0 gap-0.5 rounded-full bg-canvas p-1"
     >
       {OPTIONS.map((option) => {
         const active = option.value === value;
@@ -41,13 +54,17 @@ export function StatusToggle({ value, onChange, label }: StatusToggleProps) {
             type="button"
             aria-pressed={active}
             onClick={() => onChange(option.value)}
-            className={`rounded px-2 py-0.5 text-xs font-medium whitespace-nowrap transition-colors ${
-              active
-                ? option.activeClass
-                : "text-slate-500 hover:bg-white hover:text-slate-800"
+            className={`rounded-full px-2.5 py-1 text-[11px] font-bold whitespace-nowrap transition ${
+              active ? option.activeClass : "text-ink-mute hover:bg-card hover:text-ink"
             }`}
           >
-            {option.label}
+            {/* The full label is always present for assistive tech; the short
+                one keeps three controls on one row on a phone. */}
+            <span className="hidden sm:inline">{option.label}</span>
+            <span className="sm:hidden" aria-hidden="true">
+              {option.short}
+            </span>
+            <span className="sr-only sm:hidden">{option.label}</span>
           </button>
         );
       })}

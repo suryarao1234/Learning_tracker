@@ -28,8 +28,8 @@ export function MergeSummaryPanel({
   const hasRemoved = summary.removedTopics + summary.removedSubtopics > 0;
 
   return (
-    <div className="space-y-3 rounded-md border border-slate-200 bg-slate-50 p-3 text-sm">
-      <p className="text-slate-700">
+    <div className="space-y-3 rounded-xl border border-line bg-canvas p-3 text-sm">
+      <p className="text-ink-soft">
         Merging into your existing <strong>{existingName}</strong> subject. Anything
         already tracked keeps the progress you've recorded against it.
       </p>
@@ -56,8 +56,8 @@ export function MergeSummaryPanel({
       </dl>
 
       {hasRemoved && (
-        <div className="flex flex-wrap items-center gap-2 border-t border-slate-200 pt-3">
-          <span className="text-xs text-slate-600">
+        <div className="flex flex-wrap items-center gap-2 border-t border-line pt-3">
+          <span className="text-xs text-ink-soft">
             {summary.droppedCount === 0
               ? "Keeping everything the new roadmap left out."
               : `${plural(summary.droppedCount, "item")} will be deleted on save.`}
@@ -66,14 +66,14 @@ export function MergeSummaryPanel({
             <button
               type="button"
               onClick={() => onChange(setAllKeep(draft, true))}
-              className="rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50"
+              className="rounded-xl border border-line bg-white px-2 py-1 text-xs font-bold text-ink-soft hover:bg-canvas"
             >
               Keep all
             </button>
             <button
               type="button"
               onClick={() => onChange(setAllKeep(draft, false))}
-              className="rounded-md border border-red-200 bg-white px-2 py-1 text-xs font-medium text-red-700 hover:bg-red-50"
+              className="rounded-xl border border-red-200 bg-white px-2 py-1 text-xs font-bold text-red-700 hover:bg-red-50"
             >
               Drop all
             </button>
@@ -84,10 +84,12 @@ export function MergeSummaryPanel({
   );
 }
 
+// "New" is brand-coloured rather than green — green means done, and reusing it
+// for a bucket would make an untouched row look finished.
 const BUCKET_TONES = {
-  emerald: "border-emerald-200 bg-emerald-50",
-  slate: "border-slate-200 bg-white",
-  amber: "border-amber-200 bg-amber-50",
+  emerald: "border-brand/20 bg-brand-soft",
+  slate: "border-line bg-card",
+  amber: "border-doing/25 bg-doing-soft",
 } as const;
 
 function Bucket({
@@ -102,10 +104,10 @@ function Bucket({
   hint: string;
 }) {
   return (
-    <div className={`rounded-md border px-3 py-2 ${BUCKET_TONES[tone]}`}>
-      <dt className="text-xs font-medium text-slate-600">{term}</dt>
-      <dd className="mt-0.5 text-sm font-medium text-slate-900">{detail}</dd>
-      <dd className="mt-0.5 text-xs text-slate-500">{hint}</dd>
+    <div className={`rounded-xl border px-3 py-2 ${BUCKET_TONES[tone]}`}>
+      <dt className="text-xs font-bold text-ink-soft">{term}</dt>
+      <dd className="mt-0.5 text-sm font-bold text-ink">{detail}</dd>
+      <dd className="mt-0.5 text-xs text-ink-mute">{hint}</dd>
     </div>
   );
 }

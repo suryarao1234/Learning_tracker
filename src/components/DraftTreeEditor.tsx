@@ -27,21 +27,21 @@ type DraftTreeEditorProps = {
 };
 
 const INPUT_CLASS =
-  "w-full rounded-md border border-slate-300 bg-white px-2 py-1 text-sm text-slate-800 focus:border-slate-500 focus:outline-none";
+  "w-full rounded-xl border border-line bg-white px-2 py-1 text-sm text-ink focus:border-brand focus:outline-none";
 
 const ICON_BUTTON_CLASS =
-  "shrink-0 rounded-md px-2 py-1 text-xs font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-800 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent";
+  "shrink-0 rounded-xl px-2 py-1 text-xs font-bold text-ink-mute hover:bg-canvas hover:text-ink disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent";
 
 const STATUS_CHIP: Record<SubtopicStatus, { label: string; className: string } | null> = {
   "not-started": null,
-  "in-progress": { label: "In progress", className: "bg-amber-100 text-amber-800" },
-  done: { label: "Done", className: "bg-emerald-100 text-emerald-800" },
+  "in-progress": { label: "In progress", className: "bg-doing-soft text-doing-ink" },
+  done: { label: "Done", className: "bg-done-soft text-done-ink" },
 };
 
 function Chip({ label, className }: { label: string; className: string }) {
   return (
     <span
-      className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium whitespace-nowrap ${className}`}
+      className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-bold whitespace-nowrap ${className}`}
     >
       {label}
     </span>
@@ -50,11 +50,13 @@ function Chip({ label, className }: { label: string; className: string }) {
 
 /** The badge for one row: what bucket it's in, or what progress it carries. */
 function RowBadge({ node }: { node: DraftTopic | DraftSubtopic }) {
+  // "New" wears the brand colour, not green: green is reserved for done, and a
+  // green badge on an untouched row would read as already finished.
   if (node.origin === "new") {
-    return <Chip label="New" className="bg-emerald-100 text-emerald-800" />;
+    return <Chip label="New" className="bg-brand-soft text-brand-ink" />;
   }
   if (node.origin === "removed") {
-    return <Chip label="Not in new roadmap" className="bg-amber-100 text-amber-900" />;
+    return <Chip label="Not in new roadmap" className="bg-doing-soft text-doing-ink" />;
   }
   const status = node.status ? STATUS_CHIP[node.status] : null;
   return status ? <Chip label={status.label} className={status.className} /> : null;
@@ -75,7 +77,7 @@ export function DraftTreeEditor({
   return (
     <div className="space-y-4">
       <div>
-        <label htmlFor="draft-subject-name" className="block text-sm font-medium text-slate-700">
+        <label htmlFor="draft-subject-name" className="block text-sm font-bold text-ink-soft">
           Subject name
         </label>
         <input
@@ -88,23 +90,23 @@ export function DraftTreeEditor({
       </div>
 
       <div className="flex items-baseline justify-between">
-        <h3 className="text-sm font-medium text-slate-700">
+        <h3 className="text-sm font-bold text-ink-soft">
           Topics{" "}
-          <span className="font-normal text-slate-500">
+          <span className="font-normal text-ink-mute">
             ({counts.topics} topics, {counts.subtopics} subtopics)
           </span>
         </h3>
         <button
           type="button"
           onClick={() => onChange(addTopic(draft))}
-          className="rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50"
+          className="rounded-xl border border-line bg-white px-2 py-1 text-xs font-bold text-ink-soft hover:bg-canvas"
         >
           + Add topic
         </button>
       </div>
 
       {draft.topics.length === 0 ? (
-        <p className="rounded-md border border-dashed border-slate-300 px-3 py-6 text-center text-sm text-slate-500">
+        <p className="rounded-xl border border-dashed border-line px-3 py-6 text-center text-sm text-ink-mute">
           No topics yet. Add one, or go back and paste a roadmap with more structure.
         </p>
       ) : (
@@ -114,10 +116,8 @@ export function DraftTreeEditor({
             return (
               <li
                 key={topic.key}
-                className={`rounded-lg border p-3 ${
-                  dropped
-                    ? "border-slate-200 bg-slate-100 opacity-60"
-                    : "border-slate-200 bg-slate-50"
+                className={`rounded-2xl border border-line p-3 ${
+                  dropped ? "bg-canvas opacity-60" : "bg-canvas"
                 }`}
               >
                 <div className="flex flex-wrap items-center gap-1">
@@ -167,7 +167,7 @@ export function DraftTreeEditor({
                   )}
                 </div>
 
-                <ul className="mt-2 space-y-1 border-l border-slate-200 pl-3">
+                <ul className="mt-2 space-y-1 border-l border-line pl-3">
                   {topic.subtopics.map((subtopic, subIndex) => {
                     const subDropped = isDropped(subtopic);
                     return (
@@ -231,7 +231,7 @@ export function DraftTreeEditor({
                     <button
                       type="button"
                       onClick={() => onChange(addSubtopic(draft, topic.key))}
-                      className="rounded-md px-2 py-1 text-xs font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+                      className="rounded-xl px-2 py-1 text-xs font-bold text-ink-mute hover:bg-canvas hover:text-ink"
                     >
                       + Add subtopic
                     </button>
@@ -260,7 +260,7 @@ function KeepButton({ keep, onClick }: { keep: boolean; onClick: () => void }) {
           ? "Drop this on save — it's gone from the new roadmap"
           : "Keep this after all"
       }
-      className={`${ICON_BUTTON_CLASS} ${keep ? "hover:text-red-700" : "text-slate-700"}`}
+      className={`${ICON_BUTTON_CLASS} ${keep ? "hover:text-red-700" : "text-ink-soft"}`}
     >
       {keep ? "Drop" : "Undo drop"}
     </button>

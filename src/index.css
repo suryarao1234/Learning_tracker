@@ -1,7 +1,84 @@
 @import "tailwindcss";
 
+/*
+ * Design tokens.
+ *
+ * The palette is warm rather than clinical: a cream canvas with white cards,
+ * so progress reads as something pleasant rather than a spreadsheet.
+ *
+ * The three subject accents were validated with the dataviz palette checker
+ * under all-pairs (any two subjects can sit next to each other, since accents
+ * are assigned per subject rather than per position): lightness band, chroma
+ * floor, CVD separation and normal-vision separation all pass. They sit below
+ * 3:1 against the canvas, which is allowed only because every accent is
+ * accompanied by a visible name and a percentage — the colour never carries
+ * meaning on its own.
+ *
+ * Green is deliberately absent from the accents. It is reserved for "done",
+ * and a subject tinted green would read as a finished subject.
+ */
+@theme {
+  --font-display:
+    "Nunito", ui-rounded, "SF Pro Rounded", "Segoe UI", system-ui, -apple-system,
+    sans-serif;
+
+  --color-canvas: #fbf8f3;
+  --color-card: #ffffff;
+  --color-line: #ece6db;
+
+  --color-ink: #1b2440;
+  --color-ink-soft: #5a6685;
+  --color-ink-mute: #8a93ac;
+
+  --color-brand: #2e5fd0;
+  --color-brand-ink: #1e408f;
+  --color-brand-soft: #e9effc;
+
+  /* Subject accents — identity only, never meaning. */
+  --color-accent-a: #2e5fd0;
+  --color-accent-a-soft: #e9effc;
+  --color-accent-b: #f19a4c;
+  --color-accent-b-soft: #fdf0e1;
+  --color-accent-c: #e87bb0;
+  --color-accent-c-soft: #fcebf3;
+
+  /* Reserved status palette. Always paired with a text label. */
+  --color-done: #0e9f6e;
+  --color-done-ink: #076c4a;
+  --color-done-soft: #dcf5ea;
+  --color-doing: #d97706;
+  --color-doing-ink: #9a5608;
+  --color-doing-soft: #fdefdb;
+
+  --radius-card: 1.25rem;
+}
+
 html,
 body,
 #root {
   height: 100%;
+}
+
+body {
+  font-family: var(--font-display);
+  background-color: var(--color-canvas);
+  color: var(--color-ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* A soft, low-contrast focus ring that suits the rounded surfaces. */
+:where(button, a, input, textarea, select, [tabindex]):focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
+  border-radius: 0.5rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

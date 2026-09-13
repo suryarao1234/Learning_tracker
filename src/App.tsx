@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { ImportModal } from "./components/ImportModal";
+import { OverviewPanel } from "./components/OverviewPanel";
 import { SettingsModal } from "./components/SettingsModal";
 import { Sidebar } from "./components/Sidebar";
 import { StorageErrorBanner } from "./components/StorageErrorBanner";
@@ -16,15 +17,14 @@ function Workspace() {
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   // Derived rather than stored, so a selection that no longer exists (after a
-  // reset, or after loading the sample data) falls back to the first subject
-  // without a render-triggering effect.
-  const selected =
-    data.subjects.find((subject) => subject.id === selectedId) ?? data.subjects[0] ?? null;
+  // reset, or a backup import) falls back to the overview without an effect.
+  const selected = selectedId
+    ? (data.subjects.find((subject) => subject.id === selectedId) ?? null)
+    : null;
 
   return (
-    <div className="flex h-full flex-col bg-slate-100 text-slate-900">
+    <div className="flex h-full flex-col bg-canvas text-ink">
       <StorageErrorBanner />
-      <TopBar onToggleSidebar={() => setSidebarOpen((open) => !open)} />
       <div className="relative flex min-h-0 flex-1">
         <Sidebar
           selectedId={selected?.id ?? null}
@@ -34,8 +34,22 @@ function Workspace() {
           open={sidebarOpen}
           onClose={() => setSidebarOpen(false)}
         />
-        <SubjectPanel subject={selected} onImport={() => setImportOpen(true)} />
+
+        <div className="flex min-w-0 flex-1 flex-col">
+          <TopBar onToggleSidebar={() => setSidebarOpen((open) => !open)} />
+          <main className="min-h-0 flex-1 overflow-y-auto px-4 pb-8 sm:px-7">
+            {selected ? (
+              <SubjectPanel subject={selected} onBack={() => setSelectedId(null)} />
+            ) : (
+              <OverviewPanel
+                onOpenSubject={setSelectedId}
+                onImport={() => setImportOpen(true)}
+              />
+            )}
+          </main>
+        </div>
       </div>
+
       {importOpen && (
         <ImportModal onClose={() => setImportOpen(false)} onSaved={setSelectedId} />
       )}

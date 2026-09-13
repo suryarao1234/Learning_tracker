@@ -87,25 +87,25 @@ export function SettingsModal({ onClose }: { onClose: () => void }) {
 
   return (
     <div
-      className="fixed inset-0 z-40 flex items-center justify-center bg-slate-900/50 p-4"
+      className="fixed inset-0 z-40 flex items-center justify-center bg-ink/40 p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby="settings-title"
     >
-      <div className="flex max-h-[88vh] w-full max-w-lg flex-col rounded-lg bg-white shadow-xl">
-        <header className="border-b border-slate-200 px-5 py-4">
-          <h2 id="settings-title" className="text-lg font-semibold text-slate-900">
+      <div className="flex max-h-[88vh] w-full max-w-lg flex-col rounded-3xl bg-card shadow-2xl">
+        <header className="border-b border-line px-5 py-4">
+          <h2 id="settings-title" className="text-lg font-semibold text-ink">
             Settings
           </h2>
         </header>
 
         <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-5 py-4">
           <section>
-            <h3 className="text-sm font-medium text-slate-900">Gemini API key</h3>
-            <p className="mt-1 text-sm text-slate-600">
+            <h3 className="text-sm font-bold text-ink">Gemini API key</h3>
+            <p className="mt-1 text-sm text-ink-soft">
               Optional. When a pasted roadmap has no structure the local parser can read,
               Gemini is asked to structure it instead. Requests go to{" "}
-              <code className="rounded bg-slate-100 px-1 text-xs">{GEMINI_MODEL}</code>.
+              <code className="rounded bg-canvas px-1.5 py-0.5 text-xs">{GEMINI_MODEL}</code>.
             </p>
 
             <div className="mt-3 flex gap-2">
@@ -120,12 +120,12 @@ export function SettingsModal({ onClose }: { onClose: () => void }) {
                 spellCheck={false}
                 placeholder="Paste your key"
                 aria-label="Gemini API key"
-                className="w-full rounded-md border border-slate-300 px-2 py-1.5 font-mono text-sm text-slate-800 focus:border-slate-500 focus:outline-none"
+                className="w-full rounded-xl border border-line px-2 py-1.5 font-mono text-sm text-ink focus:border-brand focus:outline-none"
               />
               <button
                 type="button"
                 onClick={() => setRevealed((value) => !value)}
-                className="shrink-0 rounded-md border border-slate-300 px-2 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                className="shrink-0 rounded-xl border border-line px-2 py-1.5 text-xs font-bold text-ink-soft hover:bg-canvas"
               >
                 {revealed ? "Hide" : "Show"}
               </button>
@@ -136,7 +136,7 @@ export function SettingsModal({ onClose }: { onClose: () => void }) {
                 type="button"
                 onClick={handleSave}
                 disabled={!dirty}
-                className="rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-300"
+                className="rounded-xl bg-brand px-3.5 py-2 text-sm font-bold text-white transition hover:bg-brand-ink disabled:cursor-not-allowed disabled:bg-ink-mute/40"
               >
                 Save key
               </button>
@@ -148,13 +148,13 @@ export function SettingsModal({ onClose }: { onClose: () => void }) {
                     setGeminiApiKey("");
                     setSaved(false);
                   }}
-                  className="rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                  className="rounded-xl border border-line px-3 py-1.5 text-sm font-bold text-ink-soft hover:bg-canvas"
                 >
                   Remove key
                 </button>
               )}
               {saved && !dirty && (
-                <span role="status" className="text-sm text-emerald-700">
+                <span role="status" className="text-sm font-bold text-done-ink">
                   Saved.
                 </span>
               )}
@@ -164,15 +164,15 @@ export function SettingsModal({ onClose }: { onClose: () => void }) {
               Deliberately always visible, not a dismissible tooltip: this is a
               real limitation of a frontend-only app, not a nicety.
             */}
-            <p className="mt-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+            <p className="mt-3 rounded-xl border border-doing/25 bg-doing-soft px-3 py-2 text-sm font-semibold text-doing-ink">
               Your key is stored only in this browser's local storage and is sent directly
               to Google's API. Don't use this on a shared computer.
             </p>
           </section>
 
-          <section className="border-t border-slate-200 pt-5">
-            <h3 className="text-sm font-medium text-slate-900">Backup</h3>
-            <p className="mt-1 text-sm text-slate-600">
+          <section className="border-t border-line pt-5">
+            <h3 className="text-sm font-bold text-ink">Backup</h3>
+            <p className="mt-1 text-sm text-ink-soft">
               A backup file holds your subjects and progress. It never contains your API
               key.
             </p>
@@ -182,14 +182,14 @@ export function SettingsModal({ onClose }: { onClose: () => void }) {
                 type="button"
                 disabled={!hasData}
                 onClick={() => downloadBackup(data)}
-                className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:text-slate-400 disabled:hover:bg-white"
+                className="rounded-xl border border-line bg-white px-3 py-1.5 text-sm text-ink-soft hover:bg-canvas disabled:cursor-not-allowed disabled:text-ink-mute disabled:hover:bg-white"
               >
                 Export backup
               </button>
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50"
+                className="rounded-xl border border-line bg-white px-3 py-1.5 text-sm text-ink-soft hover:bg-canvas"
               >
                 Import backup…
               </button>
@@ -206,7 +206,7 @@ export function SettingsModal({ onClose }: { onClose: () => void }) {
             {backupError && (
               <p
                 role="status"
-                className="mt-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800"
+                className="mt-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800"
               >
                 {backupError}
               </p>
@@ -214,16 +214,16 @@ export function SettingsModal({ onClose }: { onClose: () => void }) {
             {backupNotice && (
               <p
                 role="status"
-                className="mt-3 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800"
+                className="mt-3 rounded-xl border border-done/25 bg-done-soft px-3 py-2 text-sm font-semibold text-done-ink"
               >
                 {backupNotice}
               </p>
             )}
           </section>
 
-          <section className="border-t border-slate-200 pt-5">
-            <h3 className="text-sm font-medium text-slate-900">Your data</h3>
-            <p className="mt-1 text-sm text-slate-600">
+          <section className="border-t border-line pt-5">
+            <h3 className="text-sm font-bold text-ink">Your data</h3>
+            <p className="mt-1 text-sm text-ink-soft">
               Everything lives in this browser. Clearing site data clears the tracker.
             </p>
 
@@ -231,7 +231,7 @@ export function SettingsModal({ onClose }: { onClose: () => void }) {
               <button
                 type="button"
                 onClick={() => (hasData ? setConfirm("sample") : loadSample())}
-                className="w-full rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50"
+                className="w-full rounded-xl border border-line bg-white px-3 py-1.5 text-sm text-ink-soft hover:bg-canvas"
               >
                 Load sample data
               </button>
@@ -239,7 +239,7 @@ export function SettingsModal({ onClose }: { onClose: () => void }) {
                 type="button"
                 disabled={!hasData}
                 onClick={() => setConfirm("reset")}
-                className="w-full rounded-md border border-red-200 bg-white px-3 py-1.5 text-sm text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:border-slate-200 disabled:text-slate-400 disabled:hover:bg-white"
+                className="w-full rounded-xl border border-red-200 bg-white px-3 py-1.5 text-sm text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:border-line disabled:text-ink-mute disabled:hover:bg-white"
               >
                 Reset all data
               </button>
@@ -247,11 +247,11 @@ export function SettingsModal({ onClose }: { onClose: () => void }) {
           </section>
         </div>
 
-        <footer className="flex justify-end border-t border-slate-200 px-5 py-3">
+        <footer className="flex justify-end border-t border-line px-5 py-3">
           <button
             type="button"
             onClick={onClose}
-            className="rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            className="rounded-xl border border-line px-3 py-1.5 text-sm font-bold text-ink-soft hover:bg-canvas"
           >
             Close
           </button>
